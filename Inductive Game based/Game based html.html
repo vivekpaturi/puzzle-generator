@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Inductive Pattern Test</title>
+  <style>
+    :root{
+      --bg:#f5f7fc;
+      --panel:#ffffff;
+      --border:#dce1eb;
+      --text:#1e232d;
+      --muted:#5b6475;
+      --accent:#2d6cdf;
+      --good:#1fbf75;
+      --bad:#e24a4a;
+      --shadow: 0 10px 26px rgba(20,30,55,0.10);
+      --radius:16px;
+    }
+    *{box-sizing:border-box;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+    html,body{height:100%;}
+    body{margin:0;background:var(--bg);color:var(--text);overflow:hidden;}
+
+    .app{
+      height:100vh;
+      max-width:1280px;
+      margin:0 auto;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+
+    .topbar{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      flex:0 0 auto;
+    }
+
+    .brand{display:flex;align-items:center;gap:10px;}
+    .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);}
+    .title{font-weight:900;font-size:15px;}
+    .subtitle{font-size:12px;color:var(--muted);margin-left:8px;white-space:nowrap;}
+
+    .stats{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .pill{
+      display:flex;gap:6px;align-items:center;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:#fff;
+      padding:6px 10px;
+      font-size:12px;
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .pill span{color:var(--muted);}
+
+    .btnbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+    }
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+    .btn:active{transform:translateY(1px);}
+
+    .main{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:10px;
+      min-height:0;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .cardHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex:0 0 auto;
+      color:var(--muted);
+      font-size:12px;
+      padding:0 2px;
+      white-space:nowrap;
+    }
+
+    .patternWrap{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+
+    .optionsGrid{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap:10px;
+    }
+
+    .opt{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background:#fff;
+      padding:8px;
+      cursor:pointer;
+      box-shadow:0 6px 14px rgba(20,30,55,0.06);
+      transition:transform .06s ease, border-color .08s ease;
+      user-select:none;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      overflow:hidden;
+    }
+    .opt:active{transform:translateY(1px);}
+    .optTop{
+      flex:0 0 auto;
+      display:flex;align-items:center;justify-content:flex-start;
+      color:var(--muted);
+      font-size:12px;
+      gap:8px;
+    }
+    .optLetter{
+      width:26px;height:26px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      background:#f2f5fb;border:1px solid var(--border);
+      color:var(--text);font-weight:900;font-size:13px;
+      flex:0 0 auto;
+    }
+    .optBody{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+
+    canvas{display:block;max-width:100%;height:auto;}
+
+    .opt.correct{border-color:var(--good); box-shadow:0 0 0 3px rgba(31,191,117,0.18);}
+    .opt.wrong{border-color:var(--bad); box-shadow:0 0 0 3px rgba(226,74,74,0.18);}
+    .opt.disabled{cursor:default; opacity:0.96;}
+
+    /* Result modal */
+    .overlay{
+      position:fixed;inset:0;background:rgba(15,18,25,0.55);
+      display:none;align-items:center;justify-content:center;
+      padding:12px;
+    }
+    .modal{
+      width:min(720px, 100%);
+      background:#fff;border-radius:18px;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .modal h2{margin:0 0 10px 0;font-size:18px;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .kv{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      font-size:13px;
+      color:var(--text);
+    }
+    .kv div{color:var(--muted);font-size:12px;margin-top:2px;}
+    .pass{color:var(--good);font-weight:900;}
+    .fail{color:var(--bad);font-weight:900;}
+    .modalBtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+
+    /* Small screens: keep no-scroll by splitting height */
+    @media (max-width: 980px){
+      .main{grid-template-columns:1fr;grid-template-rows: 1fr 1fr;}
+      .subtitle{display:none;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="dot"></div>
+        <div class="title">Inductive Pattern Test</div>
+        <div class="subtitle">Pick the option that follows the same transformation</div>
+      </div>
+
+      <div class="stats">
+        <div class="pill">Time: <span id="timeLeft">05:00</span></div>
+        <div class="pill">Attempted: <span id="attempted">0</span></div>
+        <div class="pill">Correct: <span id="correct">0</span></div>
+        <div class="pill">Accuracy: <span id="accuracy">0%</span></div>
+      </div>
+
+      <div class="btnbar">
+        <button class="btn primary" id="btnStart">Start</button>
+        <button class="btn" id="btnReset">Reset</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card">
+        <div class="cardHeader">
+          <div>Question</div>
+          <div style="opacity:.9;">Source 1 → Source 2</div>
+        </div>
+        <div class="patternWrap">
+          <canvas id="patternCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardHeader">
+          <div>Options</div>
+          <div style="opacity:.9;">A / B / C / D</div>
+        </div>
+        <div class="optionsGrid">
+          <div class="opt" data-letter="A">
+            <div class="optTop"><div class="optLetter">A</div></div>
+            <div class="optBody"><canvas class="optCanvas" id="optA"></canvas></div>
+          </div>
+          <div class="opt" data-letter="B">
+            <div class="optTop"><div class="optLetter">B</div></div>
+            <div class="optBody"><canvas class="optCanvas" id="optB"></canvas></div>
+          </div>
+          <div class="opt" data-letter="C">
+            <div class="optTop"><div class="optLetter">C</div></div>
+            <div class="optBody"><canvas class="optCanvas" id="optC"></canvas></div>
+          </div>
+          <div class="opt" data-letter="D">
+            <div class="optTop"><div class="optLetter">D</div></div>
+            <div class="optBody"><canvas class="optCanvas" id="optD"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2 id="resultTitle">Test Result</h2>
+      <div class="grid2">
+        <div class="kv">Total attempted: <span id="rAttempted">0</span><div>Questions attempted in 5 minutes</div></div>
+        <div class="kv">Total correct: <span id="rCorrect">0</span><div>Minimum required: <span id="rMinCorrect">20</span></div></div>
+        <div class="kv">Accuracy: <span id="rAccuracy">0%</span><div>Minimum required: <span id="rMinAcc">70%</span></div></div>
+        <div class="kv">Status: <span id="rStatus" class="fail">FAIL</span><div>Pass if correct ≥ 20 AND accuracy ≥ 70%</div></div>
+      </div>
+      <div class="modalBtns">
+        <button class="btn primary" id="btnTryAgain">Try again</button>
+        <button class="btn" id="btnClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --------------------------------------------
+    // CONFIG
+    // --------------------------------------------
+    const CONFIG = {
+      durationSeconds: 300,        // 5 mins
+      passMinCorrect: 20,
+      passMinAccuracy: 70,         // %
+      randomRuleEachQuestion: true,
+      poolSize: 24,
+      minUniqueInGrid: 6
+    };
+
+    // --------------------------------------------
+    // Symbols
+    // --------------------------------------------
+    const SHAPES = ["circle","square","triangle","star","diamond","plus"];
+    const COLORS = [
+      "#eb3c3c","#468cff","#32c878","#ffc81e","#a050dc",
+      "#ff8c32","#32c8c8","#9aa3b2","#ff69b4","#d2b48c"
+    ];
+
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function sampleUnique(arr, n){
+      const copy = arr.slice(), out = [];
+      while(out.length<n && copy.length){
+        const i = Math.floor(Math.random()*copy.length);
+        out.push(copy.splice(i,1)[0]);
+      }
+      return out;
+    }
+
+    function buildSymbolPool(){
+      const combos = [];
+      for (const sh of SHAPES) for (const co of COLORS) combos.push({ shape: sh, color: co, key: sh + "|" + co });
+      if (combos.length <= CONFIG.poolSize) return combos;
+      return sampleUnique(combos, CONFIG.poolSize);
+    }
+
+    function cloneGrid(g){ return g.map(row=>row.slice()); }
+    function gridEquals(a,b){
+      for(let r=0;r<3;r++)for(let c=0;c<3;c++) if(a[r][c].key!==b[r][c].key) return false;
+      return true;
+    }
+    function randomGrid(pool){
+      const minUnique = Math.max(3, Math.min(9, CONFIG.minUniqueInGrid));
+      for(let tries=0; tries<3000; tries++){
+        const cells = Array.from({length:9}, ()=>pick(pool));
+        const uniq = new Set(cells.map(s=>s.key)).size;
+        if (uniq >= minUnique) return [cells.slice(0,3), cells.slice(3,6), cells.slice(6,9)];
+      }
+      const cells = Array.from({length:9}, ()=>pick(pool));
+      return [cells.slice(0,3), cells.slice(3,6), cells.slice(6,9)];
+    }
+    function md5Like(obj){ return JSON.stringify(obj, (k,v)=> (v && v.key) ? v.key : v ); }
+
+    // --------------------------------------------
+    // Rules (10)
+    // --------------------------------------------
+    const RULES = [
+      {
+        id:"dominant_key_swap",
+        gen:(pool)=> {
+          const dominant = pick(pool);
+          const candidates = pool.filter(s => s.key !== dominant.key);
+          const rightCol = sampleUnique(candidates, 3);
+          return [
+            [dominant, dominant, rightCol[0]],
+            [dominant, dominant, rightCol[1]],
+            [dominant, dominant, rightCol[2]],
+          ];
+        },
+        apply:(grid)=> {
+          const flat = grid.flat();
+          const counts = new Map();
+          for (const s of flat) counts.set(s.key, (counts.get(s.key)||0)+1);
+          let dominantKey = null, max = -1;
+          for (const [k,v] of counts.entries()) if (v>max){max=v;dominantKey=k;}
+          if (max !== 6) throw new Error("dominant_key_swap needs dominant count=6");
+          const keyCell = grid[0][2];
+          if (keyCell.key === dominantKey) throw new Error("dominant_key_swap key must differ from dominant");
+          const out = cloneGrid(grid);
+          for (let r=0;r<3;r++){
+            for (let c=0;c<3;c++){
+              if (grid[r][c].key === dominantKey) out[r][c] = keyCell;
+            }
+          }
+          const dominantSym = flat.find(s=>s.key===dominantKey);
+          out[0][2] = dominantSym;
+          return out;
+        }
+      },
+      { id:"rotate_right_col_dn", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> { const out = cloneGrid(g); out[0][2]=g[2][2]; out[1][2]=g[0][2]; out[2][2]=g[1][2]; return out; }
+      },
+      { id:"rotate_left_col_up", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> { const out = cloneGrid(g); out[0][0]=g[1][0]; out[1][0]=g[2][0]; out[2][0]=g[0][0]; return out; }
+      },
+      { id:"swap_row0_row2", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> { const out = cloneGrid(g); [out[0], out[2]] = [out[2], out[0]]; return out; }
+      },
+      { id:"mirror_horizontal", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> g.map(row => [row[2], row[1], row[0]])
+      },
+      { id:"mirror_vertical", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> [g[2].slice(), g[1].slice(), g[0].slice()]
+      },
+      { id:"shift_rows_right", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> { const out = cloneGrid(g); for (let r=0;r<3;r++){ out[r][0]=g[r][2]; out[r][1]=g[r][0]; out[r][2]=g[r][1]; } return out; }
+      },
+      { id:"shift_cols_down", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> { const out = cloneGrid(g); for (let c=0;c<3;c++){ out[0][c]=g[2][c]; out[1][c]=g[0][c]; out[2][c]=g[1][c]; } return out; }
+      },
+      { id:"rotate_grid_90_cw", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> { const out = Array.from({length:3}, ()=>Array(3).fill(null)); for (let r=0;r<3;r++){ for (let c=0;c<3;c++){ out[r][c]=g[2-c][r]; } } return out; }
+      },
+      { id:"transpose", gen:(pool)=> randomGrid(pool),
+        apply:(g)=> { const out = Array.from({length:3}, ()=>Array(3).fill(null)); for (let r=0;r<3;r++){ for (let c=0;c<3;c++){ out[r][c]=g[c][r]; } } return out; }
+      }
+    ];
+
+    function ruleById(id){ return RULES.find(r=>r.id===id); }
+
+    function mutateOutputToBeWrong(correctOut){
+      const out = cloneGrid(correctOut);
+      [out[1][2], out[2][2]] = [out[2][2], out[1][2]];
+      if (!gridEquals(out, correctOut)) return out;
+      const out2 = cloneGrid(correctOut);
+      [out2[0][0], out2[0][1]] = [out2[0][1], out2[0][0]];
+      return out2;
+    }
+
+    function generateOptionsForRule(targetRuleId, pool){
+      const letters = ["A","B","C","D"];
+      const correctLetter = pick(letters);
+      const targetRule = ruleById(targetRuleId);
+
+      let correctIn, correctOut;
+      for(let t=0;t<4000;t++){
+        correctIn = targetRule.gen(pool);
+        try{
+          correctOut = targetRule.apply(correctIn);
+          if (!gridEquals(correctIn, correctOut)) break;
+        }catch(e){}
+      }
+      if (!correctOut) { correctIn = randomGrid(pool); correctOut = correctIn; }
+
+      const options = {};
+      options[correctLetter] = { input: correctIn, output: correctOut };
+
+      const used = new Set();
+      used.add(md5Like({i:correctIn,o:correctOut}));
+
+      const otherRules = RULES.filter(r=>r.id!==targetRuleId);
+
+      for (const ltr of letters.filter(x=>x!==correctLetter)){
+        let built = false;
+
+        for(let tries=0; tries<6000; tries++){
+          const wrongRule = pick(otherRules);
+          let inp, outp;
+
+          try{ inp = wrongRule.gen(pool); outp = wrongRule.apply(inp); }
+          catch(e){ continue; }
+
+          if (gridEquals(inp, outp)) continue;
+
+          let matchesTarget = false;
+          try{
+            const targetOut = targetRule.apply(inp);
+            if (gridEquals(targetOut, outp)) matchesTarget = true;
+          }catch(e){}
+
+          if (matchesTarget) continue;
+
+          const key = md5Like({i:inp,o:outp});
+          if (used.has(key)) continue;
+
+          used.add(key);
+          options[ltr] = { input: inp, output: outp };
+          built = true;
+          break;
+        }
+
+        if (!built){
+          let inp2, trueOut;
+          for(let t=0;t<4000;t++){
+            inp2 = targetRule.gen(pool);
+            try{
+              trueOut = targetRule.apply(inp2);
+              if (!gridEquals(inp2,trueOut)) break;
+            }catch(e){}
+          }
+          if (!trueOut){ inp2 = randomGrid(pool); trueOut = inp2; }
+          options[ltr] = { input: inp2, output: mutateOutputToBeWrong(trueOut) };
+        }
+      }
+
+      return { options, correctLetter };
+    }
+
+    function generatePuzzle(ruleId, pool){
+      const rule = ruleById(ruleId);
+
+      let src1, src2;
+      for(let t=0;t<5000;t++){
+        src1 = rule.gen(pool);
+        try{
+          src2 = rule.apply(src1);
+          if (!gridEquals(src1, src2)) break;
+        }catch(e){}
+      }
+      if (!src2){ src1 = randomGrid(pool); src2 = src1; }
+
+      const { options, correctLetter } = generateOptionsForRule(ruleId, pool);
+      return { ruleId, source1: src1, source2: src2, options, correctOption: correctLetter };
+    }
+
+    // --------------------------------------------
+    // Drawing (auto-fit to containers)
+    // --------------------------------------------
+    const STYLE = {
+      border:"#dce1eb",
+      cell:"#ffffff",
+      muted:"#5b6475",
+      arrow:"#788296"
+    };
+
+    function setupCanvas(canvas, cssW, cssH){
+      const dpr = window.devicePixelRatio || 1;
+      canvas.style.width = Math.max(1, Math.floor(cssW)) + "px";
+      canvas.style.height = Math.max(1, Math.floor(cssH)) + "px";
+      canvas.width  = Math.max(1, Math.round(cssW * dpr));
+      canvas.height = Math.max(1, Math.round(cssH * dpr));
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      return ctx;
+    }
+
+    function roundRect(ctx, x,y,w,h,r){
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y, x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x, y+h, r);
+      ctx.arcTo(x, y+h, x, y, r);
+      ctx.arcTo(x, y, x+w, y, r);
+      ctx.closePath();
+    }
+
+    function drawCell(ctx, x,y, cell){
+      ctx.save();
+      ctx.fillStyle = STYLE.cell;
+      ctx.strokeStyle = STYLE.border;
+      ctx.lineWidth = 2;
+      roundRect(ctx, x,y,cell,cell, Math.min(16, cell*0.2));
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawShape(ctx, sym, cx, cy, size){
+      ctx.save();
+      ctx.fillStyle = sym.color;
+
+      const x = cx - size/2;
+      const y = cy - size/2;
+
+      if (sym.shape === "circle"){
+        ctx.beginPath(); ctx.arc(cx, cy, size*0.5, 0, Math.PI*2); ctx.fill();
+      } else if (sym.shape === "square"){
+        roundRect(ctx, x,y,size,size, Math.max(6, size*0.18)); ctx.fill();
+      } else if (sym.shape === "triangle"){
+        ctx.beginPath();
+        ctx.moveTo(cx, y);
+        ctx.lineTo(x, y+size);
+        ctx.lineTo(x+size, y+size);
+        ctx.closePath(); ctx.fill();
+      } else if (sym.shape === "diamond"){
+        ctx.beginPath();
+        ctx.moveTo(cx, y);
+        ctx.lineTo(x+size, cy);
+        ctx.lineTo(cx, y+size);
+        ctx.lineTo(x, cy);
+        ctx.closePath(); ctx.fill();
+      } else if (sym.shape === "plus"){
+        const t = size*0.22;
+        roundRect(ctx, cx - t/2, y, t, size, t*0.35); ctx.fill();
+        roundRect(ctx, x, cy - t/2, size, t, t*0.35); ctx.fill();
+      } else if (sym.shape === "star"){
+        const R = size*0.5, r = R*0.45;
+        ctx.beginPath();
+        for (let i=0;i<10;i++){
+          const a = (-Math.PI/2) + i*(Math.PI/5);
+          const rad = (i%2===0)?R:r;
+          const px = cx + rad*Math.cos(a);
+          const py = cy + rad*Math.sin(a);
+          if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+        }
+        ctx.closePath(); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.arc(cx, cy, size*0.5, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawGrid(ctx, grid, x, y, cell, gap){
+      for(let r=0;r<3;r++){
+        for(let c=0;c<3;c++){
+          const px = x + c*(cell+gap);
+          const py = y + r*(cell+gap);
+          drawCell(ctx, px, py, cell);
+          drawShape(ctx, grid[r][c], px + cell/2, py + cell/2, Math.max(10, cell-28));
+        }
+      }
+    }
+
+    function drawArrow(ctx, x1,y1,x2,y2){
+      ctx.save();
+      ctx.strokeStyle = STYLE.arrow;
+      ctx.lineWidth = 5;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x1,y1);
+      ctx.lineTo(x2,y2);
+      ctx.stroke();
+
+      const ang = Math.atan2(y2-y1, x2-x1);
+      const head = 12;
+      const a1 = ang + Math.PI*0.85;
+      const a2 = ang - Math.PI*0.85;
+
+      ctx.fillStyle = STYLE.arrow;
+      ctx.beginPath();
+      ctx.moveTo(x2,y2);
+      ctx.lineTo(x2 + head*Math.cos(a1), y2 + head*Math.sin(a1));
+      ctx.lineTo(x2 + head*Math.cos(a2), y2 + head*Math.sin(a2));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function text(ctx, s, x,y, size=13, color=STYLE.muted, weight="800"){
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.font = `${weight} ${size}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+      ctx.fillText(s, x, y);
+      ctx.restore();
+    }
+
+    function bestSpec(maxW, maxH, showLabels){
+      // Try largest cell that fits
+      for (let cell=92; cell>=42; cell--){
+        const gap = Math.max(8, Math.round(cell*0.14));
+        const pad = Math.max(10, Math.round(cell*0.18));
+        const headerH = showLabels ? Math.max(24, Math.round(cell*0.38)) : Math.max(8, Math.round(cell*0.14));
+        const midGap = showLabels ? Math.max(70, Math.round(cell*1.15)) : Math.max(54, Math.round(cell*0.92));
+
+        const gridW = 3*cell + 2*gap;
+        const gridH = 3*cell + 2*gap;
+        const w = pad + gridW + midGap + gridW + pad;
+        const h = pad + headerH + gridH + pad;
+
+        if (w <= maxW && h <= maxH){
+          return { cell, gap, pad, headerH, midGap, w, h, showLabels };
+        }
+      }
+      // Smallest fallback
+      const cell = 42, gap=8, pad=10, headerH = showLabels ? 24 : 8, midGap = showLabels ? 70 : 54;
+      const gridW = 3*cell + 2*gap;
+      const gridH = 3*cell + 2*gap;
+      const w = pad + gridW + midGap + gridW + pad;
+      const h = pad + headerH + gridH + pad;
+      return { cell, gap, pad, headerH, midGap, w, h, showLabels };
+    }
+
+    function drawPair(canvas, leftGrid, rightGrid, spec){
+      const ctx = setupCanvas(canvas, spec.w, spec.h);
+
+      ctx.clearRect(0,0,spec.w,spec.h);
+      // background panel
+      ctx.save();
+      ctx.fillStyle = "#fff";
+      ctx.strokeStyle = STYLE.border;
+      ctx.lineWidth = 2;
+      roundRect(ctx, 1,1,spec.w-2,spec.h-2, 16);
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+
+      const gridW = 3*spec.cell + 2*spec.gap;
+      const gridH = 3*spec.cell + 2*spec.gap;
+
+      const g1x = spec.pad;
+      const gy  = spec.pad + spec.headerH;
+      const g2x = spec.pad + gridW + spec.midGap;
+
+      if (spec.showLabels){
+        text(ctx, "Source 1", g1x, spec.pad + 18, 13, STYLE.muted, "800");
+        text(ctx, "Source 2", g2x, spec.pad + 18, 13, STYLE.muted, "800");
+      }
+
+      drawGrid(ctx, leftGrid,  g1x, gy, spec.cell, spec.gap);
+      drawGrid(ctx, rightGrid, g2x, gy, spec.cell, spec.gap);
+
+      drawArrow(ctx, g1x + gridW + 16, gy + gridH/2, g2x - 16, gy + gridH/2);
+    }
+
+    // --------------------------------------------
+    // Test Engine
+    // --------------------------------------------
+    const patternCanvas = document.getElementById("patternCanvas");
+    const optCanvases = {
+      A: document.getElementById("optA"),
+      B: document.getElementById("optB"),
+      C: document.getElementById("optC"),
+      D: document.getElementById("optD")
+    };
+
+    const els = {
+      timeLeft: document.getElementById("timeLeft"),
+      attempted: document.getElementById("attempted"),
+      correct: document.getElementById("correct"),
+      accuracy: document.getElementById("accuracy"),
+      btnStart: document.getElementById("btnStart"),
+      btnReset: document.getElementById("btnReset"),
+      overlay: document.getElementById("overlay"),
+      rAttempted: document.getElementById("rAttempted"),
+      rCorrect: document.getElementById("rCorrect"),
+      rAccuracy: document.getElementById("rAccuracy"),
+      rMinCorrect: document.getElementById("rMinCorrect"),
+      rMinAcc: document.getElementById("rMinAcc"),
+      rStatus: document.getElementById("rStatus"),
+      btnTryAgain: document.getElementById("btnTryAgain"),
+      btnClose: document.getElementById("btnClose"),
+    };
+
+    let pool = buildSymbolPool();
+    let currentPuzzle = null;
+    let locked = true;
+
+    let started = false;
+    let endAt = 0;
+    let tickTimer = null;
+
+    let stats = { attempted: 0, correct: 0 };
+
+    // layout specs (recomputed on resize)
+    let patternSpec = null;
+    let optionSpec = null;
+
+    function fmtTime(sec){
+      const m = Math.floor(sec/60);
+      const s = sec%60;
+      return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+    }
+
+    function accuracyPct(){
+      if (stats.attempted === 0) return 0;
+      return Math.round((stats.correct / stats.attempted) * 100);
+    }
+
+    function updateTopbar(){
+      els.attempted.textContent = String(stats.attempted);
+      els.correct.textContent = String(stats.correct);
+      els.accuracy.textContent = String(accuracyPct()) + "%";
+    }
+
+    function chooseRuleId(){
+      if (!CONFIG.randomRuleEachQuestion) return RULES[stats.attempted % RULES.length].id;
+      return pick(RULES).id;
+    }
+
+    function clearOptionStates(){
+      document.querySelectorAll(".opt").forEach(o=>{
+        o.classList.remove("correct","wrong","disabled");
+      });
+    }
+
+    function lockOptions(){
+      locked = true;
+      document.querySelectorAll(".opt").forEach(o=>o.classList.add("disabled"));
+    }
+
+    function layoutCanvases(){
+      const patternWrap = document.querySelector(".patternWrap");
+      const pw = Math.max(120, patternWrap.clientWidth - 8);
+      const ph = Math.max(120, patternWrap.clientHeight - 8);
+      patternSpec = bestSpec(pw, ph, true);
+
+      // options: find the tightest option body box and fit to that
+      let minOW = Infinity, minOH = Infinity;
+      document.querySelectorAll(".opt").forEach(opt=>{
+        const top = opt.querySelector(".optTop");
+        const body = opt.querySelector(".optBody");
+        const ow = Math.max(90, body.clientWidth - 6);
+        const oh = Math.max(90, body.clientHeight - 6);
+        minOW = Math.min(minOW, ow);
+        minOH = Math.min(minOH, oh);
+      });
+      optionSpec = bestSpec(minOW, minOH, false);
+
+      // If question canvases already exist, redraw with new sizes
+      if (currentPuzzle){
+        renderCurrent();
+      } else {
+        // draw demo (no scroll)
+        const demo1 = randomGrid(pool), demo2 = randomGrid(pool);
+        drawPair(patternCanvas, demo1, demo2, patternSpec);
+        for (const ltr of ["A","B","C","D"]){
+          drawPair(optCanvases[ltr], randomGrid(pool), randomGrid(pool), optionSpec);
+        }
+      }
+    }
+
+    function renderCurrent(){
+      if (!currentPuzzle) return;
+      drawPair(patternCanvas, currentPuzzle.source1, currentPuzzle.source2, patternSpec);
+      for (const ltr of ["A","B","C","D"]){
+        const o = currentPuzzle.options[ltr];
+        drawPair(optCanvases[ltr], o.input, o.output, optionSpec);
+      }
+    }
+
+    function newQuestion(){
+      pool = buildSymbolPool();
+      const ruleId = chooseRuleId();
+      currentPuzzle = generatePuzzle(ruleId, pool);
+
+      renderCurrent();
+      clearOptionStates();
+      locked = false;
+
+      window.dispatchEvent(new CustomEvent("inductive_question_shown", {
+        detail: { attemptedSoFar: stats.attempted, correctSoFar: stats.correct }
+      }));
+    }
+
+    function handleAnswer(letter){
+      if (!started || locked) return;
+
+      lockOptions();
+
+      const isCorrect = (letter === currentPuzzle.correctOption);
+      stats.attempted += 1;
+      if (isCorrect) stats.correct += 1;
+
+      updateTopbar();
+
+      const chosen = document.querySelector(`.opt[data-letter="${letter}"]`);
+      const correctEl = document.querySelector(`.opt[data-letter="${currentPuzzle.correctOption}"]`);
+      if (chosen) chosen.classList.add(isCorrect ? "correct" : "wrong");
+      if (!isCorrect && correctEl) correctEl.classList.add("correct");
+
+      window.dispatchEvent(new CustomEvent("inductive_answer", {
+        detail: {
+          chosen: letter,
+          correct: currentPuzzle.correctOption,
+          isCorrect,
+          attempted: stats.attempted,
+          correctCount: stats.correct,
+          accuracy: accuracyPct()
+        }
+      }));
+
+      setTimeout(()=>{
+        if (started) newQuestion();
+      }, 520);
+    }
+
+    function startTest(){
+      if (started) return;
+      started = true;
+      locked = false;
+      stats = { attempted: 0, correct: 0 };
+      updateTopbar();
+      clearOptionStates();
+
+      const now = Date.now();
+      endAt = now + CONFIG.durationSeconds * 1000;
+      els.timeLeft.textContent = fmtTime(CONFIG.durationSeconds);
+
+      if (tickTimer) clearInterval(tickTimer);
+      tickTimer = setInterval(tick, 200);
+
+      newQuestion();
+
+      window.dispatchEvent(new CustomEvent("inductive_test_start", {
+        detail: { durationSeconds: CONFIG.durationSeconds }
+      }));
+    }
+
+    function resetTest(){
+      started = false;
+      locked = true;
+      stats = { attempted: 0, correct: 0 };
+      updateTopbar();
+      els.timeLeft.textContent = fmtTime(CONFIG.durationSeconds);
+      if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+      clearOptionStates();
+      currentPuzzle = null;
+      layoutCanvases(); // redraw demo
+      lockOptions();
+    }
+
+    function tick(){
+      const now = Date.now();
+      const leftMs = Math.max(0, endAt - now);
+      const leftSec = Math.ceil(leftMs / 1000);
+      els.timeLeft.textContent = fmtTime(leftSec);
+      if (leftMs <= 0) finishTest();
+    }
+
+    function finishTest(){
+      if (!started) return;
+      started = false;
+      lockOptions();
+      if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+
+      const acc = accuracyPct();
+      const pass = (stats.correct >= CONFIG.passMinCorrect) && (acc >= CONFIG.passMinAccuracy);
+
+      els.rAttempted.textContent = String(stats.attempted);
+      els.rCorrect.textContent = String(stats.correct);
+      els.rAccuracy.textContent = String(acc) + "%";
+      els.rMinCorrect.textContent = String(CONFIG.passMinCorrect);
+      els.rMinAcc.textContent = String(CONFIG.passMinAccuracy) + "%";
+
+      els.rStatus.textContent = pass ? "PASS" : "FAIL";
+      els.rStatus.className = pass ? "pass" : "fail";
+
+      document.getElementById("overlay").style.display = "flex";
+
+      const resultPayload = {
+        attempted: stats.attempted,
+        correct: stats.correct,
+        accuracy: acc,
+        passMinCorrect: CONFIG.passMinCorrect,
+        passMinAccuracy: CONFIG.passMinAccuracy,
+        pass,
+        durationSeconds: CONFIG.durationSeconds,
+        finishedAt: new Date().toISOString()
+      };
+
+      try{ localStorage.setItem("inductive_last_result", JSON.stringify(resultPayload)); }catch(e){}
+
+      window.dispatchEvent(new CustomEvent("inductive_test_complete", { detail: resultPayload }));
+    }
+
+    // --------------------------------------------
+    // Events
+    // --------------------------------------------
+    document.querySelectorAll(".opt").forEach(opt=>{
+      opt.addEventListener("click", ()=>handleAnswer(opt.dataset.letter));
+    });
+
+    els.btnStart.addEventListener("click", startTest);
+    els.btnReset.addEventListener("click", resetTest);
+
+    els.btnTryAgain.addEventListener("click", ()=>{
+      els.overlay.style.display = "none";
+      resetTest();
+      startTest();
+    });
+    els.btnClose.addEventListener("click", ()=>{
+      els.overlay.style.display = "none";
+    });
+
+    window.addEventListener("keydown", (e)=>{
+      if (!started || locked) return;
+      const k = e.key.toUpperCase();
+      if (["A","B","C","D"].includes(k)) handleAnswer(k);
+    });
+
+    window.addEventListener("resize", ()=>{
+      // throttle with rAF
+      requestAnimationFrame(layoutCanvases);
+    });
+
+    // --------------------------------------------
+    // Init
+    // --------------------------------------------
+    function init(){
+      els.timeLeft.textContent = fmtTime(CONFIG.durationSeconds);
+      updateTopbar();
+      pool = buildSymbolPool();
+
+      // initial layout + demo
+      layoutCanvases();
+      lockOptions();
+    }
+    init();
+  </script>
+</body>
+</html>
